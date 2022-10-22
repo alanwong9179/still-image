@@ -85,14 +85,57 @@ function App() {
     canvas.renderAll()
    }
 
-   
+   const saveImage = () => {
+    let fullResScale = 0
+    console.log(info.OgH, info.OgW)
+    if(info.OgH === 0) {
+      fullResScale = info.OgW / info.firstImgW
+    }else{
+      fullResScale = info.OgH / info.firstImgH
+    }
+
+    console.log(fullResScale)
+
+    let fullCanvas = new fabric.Canvas('fullcanvas', {
+      backgroundColor: '#ffffff',
+      width: fullResScale * info.cWidth,
+      height: fullResScale * info.cHeight
+    })
+
+    fabric.Image.fromURL('https://upload.wikimedia.org/wikipedia/commons/b/b6/Image_created_with_a_mobile_phone.png', function (oImg){
+      if (oImg.width >= oImg.height) {
+        oImg.scaleToWidth(fullResScale * info.imgW);
+      }else{
+        oImg.scaleToHeight(fullResScale * info.imgW);
+      }
+  
+      oImg.set({
+        left:  fullResScale * info.cWidth/2 - oImg.getScaledWidth()/2,
+        top:  fullResScale * info.cHeight/2 - oImg.getScaledHeight()/2,
+        selectable: false,
+      })
+  
+      fullCanvas.add(oImg).renderAll();
+    }, {crossOrigin:'Anonymous'})
+    
+    let outputImageURL = canvas.toDataURL({
+      format: 'jpeg',
+      quality: 1,
+    })
+
+    console.log(outputImageURL)
+
+   }
+
+
 
   return (
    <div>
     <canvas id="canvas" />
+    <canvas id="fullcanvas" style={{display:'none'}}/>
     <input type={"range"} onInput={(e)=>{scaleImage(e.target.value)}}></input>
     <button onClick={()=>{loadImage()}}>load</button>
-    <button onClick={()=>{scaleImage()}}>save</button>
+    <button onClick={()=>{saveImage()}}>save</button>
    </div>
   )
 }
