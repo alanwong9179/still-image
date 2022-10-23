@@ -1,14 +1,35 @@
 import  React, { useState, useEffect, useRef} from 'react'
 import { fabric } from 'fabric';
+import { styled } from '@mui/material';
+import { Box } from '@mui/system';
+import color from './color/palettes';
+import useMeasure from 'react-use-measure';
+import ImageDownloader from './functions/ImageDownloader';
 
+const MainContainer = styled(Box)({
+  display:'flex',
+  flexDirection:'column',
+  width:'100%',
+  backgroundColor: color.main,
+  minHeight: '100vh'
+})
+
+const ImageContainer = styled(Box)({
+  flex: 2,
+})
+
+const ToolsContainer = styled(Box)({
+  flex: 1
+})
 
 function App() {
 
   const [canvas, setCanvas] = useState('');
   const [info, setInfo] = useState({imgW:0, imgH:0, OgW:0, OgH:0, cWidth:0, cHeight:0, firstImgH:0, firstImgW:0})
+  const [uploadedImg, setUploadedImg] = useState(null)
   const imageRef = useRef(null)
-  
-  console.log(canvas)
+  const [imgContainerRef, imgContainerBounds] = useMeasure()
+  const [imageContainerSize, setImageContainerSize] = useState({top: 0, left: 0, isSet: false})
 
   useEffect(() => {
     initValue(), 
@@ -38,9 +59,9 @@ function App() {
 
    const loadImage = () => {
     //init
-    let imgW, imgH, firstImgW, firstImgH, OgW, OgH
+    let imgW, imgH, firstImgW, firstImgH, OgW, OgH = 0
 
-    fabric.Image.fromURL('https://upload.wikimedia.org/wikipedia/commons/b/b6/Image_created_with_a_mobile_phone.png', (oImg) => {
+    fabric.Image.fromURL(uploadedImg, (oImg) => {
 
       if (oImg.width >= oImg.height) {
         OgW = oImg.width
@@ -85,58 +106,96 @@ function App() {
     canvas.renderAll()
    }
 
-   const saveImage = () => {
+   const saveImage = async () => {
     let fullResScale = 0
-    console.log(info.OgH, info.OgW)
+
     if(info.OgH === 0) {
       fullResScale = info.OgW / info.firstImgW
     }else{
       fullResScale = info.OgH / info.firstImgH
     }
-
-    console.log(fullResScale)
-
+    console.log(fullResScale )
     let fullCanvas = new fabric.Canvas('fullcanvas', {
       backgroundColor: '#ffffff',
       width: fullResScale * info.cWidth,
-      height: fullResScale * info.cHeight
+      height: fullResScale * info.cHeight,
+      display:'none'
     })
 
-    fabric.Image.fromURL('https://upload.wikimedia.org/wikipedia/commons/b/b6/Image_created_with_a_mobile_phone.png', function (oImg){
+
+
+    fabric.Image.fromURL(uploadedImg, function (oImg){
+      console.log(oImg)
       if (oImg.width >= oImg.height) {
         oImg.scaleToWidth(fullResScale * info.imgW);
       }else{
         oImg.scaleToHeight(fullResScale * info.imgW);
       }
-  
+
       oImg.set({
         left:  fullResScale * info.cWidth/2 - oImg.getScaledWidth()/2,
         top:  fullResScale * info.cHeight/2 - oImg.getScaledHeight()/2,
         selectable: false,
       })
-  
+   
       fullCanvas.add(oImg).renderAll();
+      let outputImageURL = fullCanvas.toDataURL({
+        format: 'jpeg',
+        quality: 1,
+      })
+  
+      console.log(outputImageURL)
+      ImageDownloader(outputImageURL)
     }, {crossOrigin:'Anonymous'})
     
-    let outputImageURL = canvas.toDataURL({
-      format: 'jpeg',
-      quality: 1,
-    })
 
-    console.log(outputImageURL)
 
+ 
    }
 
+   const onUpload = (element) => {
+    let uploadedImg = element.target.files[0]
+    let reader = new FileReader()
+    reader.onload = ((img) => {
+      let data = img.target.result 
+      setUploadedImg(data) // trigger useEffect loadimage
+    })
+    reader.readAsDataURL(uploadedImg)
+   }
 
+   useEffect(() => {
+    uploadedImg !== null &&
+      loadImage()
+   }, [uploadedImg])
+
+   useEffect(() => {
+    /* relocate canvas */
+    if (imgContainerBounds.width !== 0 && !imgContainerBounds.isSet){
+      setImageContainerSize({
+        top: (imgContainerBounds.height / 2 ) - (info.cHeight / 2),
+        isSet: true
+      })
+    }
+
+
+   }, [imgContainerBounds.width])
 
   return (
-   <div>
-    <canvas id="canvas" />
-    <canvas id="fullcanvas" style={{display:'none'}}/>
+   <MainContainer>
+    <ImageContainer ref={imgContainerRef} >
+      <canvas id="canvas" style={{top: imageContainerSize.top,}}/>
+      <Box style={{display:'none'}}>
+      <canvas id="fullcanvas"/>
+      </Box>
+
+    </ImageContainer>
+    <ToolsContainer>
     <input type={"range"} onInput={(e)=>{scaleImage(e.target.value)}}></input>
-    <button onClick={()=>{loadImage()}}>load</button>
+    <input type="file" id="file" onChange={(e)=>{onUpload(e)}}/>
     <button onClick={()=>{saveImage()}}>save</button>
-   </div>
+
+    </ToolsContainer>
+    </MainContainer>
   )
 }
 
