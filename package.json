@@ -15,6 +15,7 @@
     "fabric": "^5.2.4",
     "lottie-react": "^2.3.1",
     "react": "^18.2.0",
+    "react-div-100vh": "^0.7.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.6.0",
     "react-use-measure": "^2.1.1"

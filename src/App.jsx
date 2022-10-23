@@ -5,31 +5,41 @@ import { Box } from '@mui/system';
 import color from './color/palettes';
 import useMeasure from 'react-use-measure';
 import ImageDownloader from './functions/ImageDownloader';
+import ScaleSlider from './widgets/ScaleSlider';
+import NewImageDialog from './widgets/NewImageDialog';
+import Div100vh from 'react-div-100vh'
 
-const MainContainer = styled(Box)({
+const MainContainer = styled(Div100vh)({
   display:'flex',
   flexDirection:'column',
   width:'100%',
   backgroundColor: color.main,
-  minHeight: '100vh'
 })
 
 const ImageContainer = styled(Box)({
-  flex: 2,
+  flex: 3,
+  borderBottom: '3px solid #e1e1e1;',
+  zIndex: 10
 })
 
 const ToolsContainer = styled(Box)({
-  flex: 1
+  flex: 1,
+  backgroundColor: color.light1,
+  padding: 10
 })
 
 function App() {
-
   const [canvas, setCanvas] = useState('');
   const [info, setInfo] = useState({imgW:0, imgH:0, OgW:0, OgH:0, cWidth:0, cHeight:0, firstImgH:0, firstImgW:0})
   const [uploadedImg, setUploadedImg] = useState(null)
   const imageRef = useRef(null)
   const [imgContainerRef, imgContainerBounds] = useMeasure()
   const [imageContainerSize, setImageContainerSize] = useState({top: 0, left: 0, isSet: false})
+  const [openNewDialog, setOpenNewDialog] = useState(false)
+
+  useEffect(() => {
+     setOpenNewDialog((uploadedImg === null))
+  },[uploadedImg])
 
   useEffect(() => {
     initValue(), 
@@ -53,7 +63,7 @@ function App() {
     new fabric.Canvas('canvas', {
        height: info.cHeight,
        width: info.cWidth,
-       backgroundColor: 'pink'
+       backgroundColor: '#FFFFFF'
     })
  );
 
@@ -91,8 +101,8 @@ function App() {
 
    const scaleImage = (scaleValue) => {
     let img = imageRef.current
-    img.scale(parseFloat(scaleValue) * 0.005).setCoords();
-    
+    img.scale(scaleValue).setCoords();
+
     let scaledW = img.getScaledWidth()
     let scaledH = img.getScaledHeight()
     setInfo({...info, imgW: scaledW, imgH: scaledH})
@@ -114,16 +124,12 @@ function App() {
     }else{
       fullResScale = info.OgH / info.firstImgH
     }
-    console.log(fullResScale )
     let fullCanvas = new fabric.Canvas('fullcanvas', {
       backgroundColor: '#ffffff',
       width: fullResScale * info.cWidth,
       height: fullResScale * info.cHeight,
       display:'none'
     })
-
-
-
     fabric.Image.fromURL(uploadedImg, function (oImg){
       console.log(oImg)
       if (oImg.width >= oImg.height) {
@@ -176,25 +182,36 @@ function App() {
         isSet: true
       })
     }
-
-
    }, [imgContainerBounds.width])
 
+    const changeBgColor = () => {
+      console.log(imageRef.current)
+      console.log(parseFloat(imageRef.current.scaleX).toFixed(2))
+      canvas.backgroundColor = '#2200ff'
+      scaleImage(parseFloat(imageRef.current.scaleX).toFixed(2))
+
+    }
+
+
+
   return (
-   <MainContainer>
-    <ImageContainer ref={imgContainerRef} >
-      <canvas id="canvas" style={{top: imageContainerSize.top,}}/>
+   <MainContainer className='mainContainer'>
+      <ImageContainer ref={imgContainerRef} >
+      <canvas id="canvas" style={{top: imageContainerSize.top}}/>
       <Box style={{display:'none'}}>
       <canvas id="fullcanvas"/>
       </Box>
-
     </ImageContainer>
     <ToolsContainer>
-    <input type={"range"} onInput={(e)=>{scaleImage(e.target.value)}}></input>
-    <input type="file" id="file" onChange={(e)=>{onUpload(e)}}/>
-    <button onClick={()=>{saveImage()}}>save</button>
+      {
+        imageRef.current !== null &&
+        <ScaleSlider onScale={scaleImage} currentScale={imageRef.current !== null ? parseFloat(imageRef.current.scaleX).toFixed(2) : 1}/>
 
+      }
+          <button onClick={()=>{saveImage()}}>save</button>
     </ToolsContainer>
+    <NewImageDialog open={openNewDialog} onUpload={onUpload} />
+    <button onClick={()=>{changeBgColor()}}>change</button>
     </MainContainer>
   )
 }
