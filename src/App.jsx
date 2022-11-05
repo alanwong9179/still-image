@@ -116,6 +116,29 @@ function App() {
     canvas.renderAll()
    }
 
+   const onChangeFilter = () => {
+  //  fabric.textureSize = 4096
+    let img = imageRef.current
+    console.log(img)
+
+    img.filters.push(
+      new fabric.Image.filters.ColorMatrix({
+        matrix: [
+         1, -0.1, 0.023, 0, 0,
+          0, 1, 0.023, 0.023, 0,
+          0, 0, 1, 0, 0,
+          0, 0, 0, 1, 0
+        ]
+      })
+    )
+
+    img.applyFilters()
+   canvas.renderAll()
+     console.log(img)
+
+
+   }
+
    const saveImage = async () => {
     let fullResScale = 0
 
@@ -185,12 +208,13 @@ function App() {
    }, [imgContainerBounds.width])
 
     const changeBgColor = () => {
-      console.log(imageRef.current)
-      console.log(parseFloat(imageRef.current.scaleX).toFixed(2))
       canvas.backgroundColor = '#2200ff'
       scaleImage(parseFloat(imageRef.current.scaleX).toFixed(2))
-
     }
+
+
+
+
 
 
 
@@ -211,7 +235,7 @@ function App() {
           <button onClick={()=>{saveImage()}}>save</button>
     </ToolsContainer>
     <NewImageDialog open={openNewDialog} onUpload={onUpload} />
-    <button onClick={()=>{changeBgColor()}}>change</button>
+    <button onClick={()=>{onChangeFilter()}}>change</button>
     </MainContainer>
   )
 }

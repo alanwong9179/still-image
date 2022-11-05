@@ -16,11 +16,15 @@ const SliderTheme = createTheme({
 export default function ScaleSlider({onScale, currentScale}) {
   console.log(currentScale)
   const [scale, setScale] = useState(parseFloat(currentScale))
+  const [initSale, setInitSale] = useState(parseFloat(currentScale))
 
  useEffect(() => {
    onScale(scale)
- 
  }, [scale])
+
+ useEffect(() => {
+  setInitSale(parseFloat(currentScale))
+ },[])
  
 
   return (
@@ -46,11 +50,14 @@ export default function ScaleSlider({onScale, currentScale}) {
         aria-label="Temperature"
         value={scale}
         valueLabelDisplay="auto"
-        onChange={(e)=>{setScale(e.target.value)}}
-        step={0.05}
+        onChange={(e)=>{
+
+        setScale( e.target.value)
+        }}
+        step={initSale*0.05}
         marks
-        min={0.1}
-        max={2.0}
+        max={initSale*2}
+        min={initSale*0.5}
       />
     </ThemeProvider>
 
